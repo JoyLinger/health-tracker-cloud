@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>健康打卡平台 · 冲刺第1周</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>window.echarts||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"><\/script>');</script>
+<style>
+/* 主题：深墨绿（默认） */
+:root, [data-theme="green"]{
+  --bg:#0b100e; --bg2:#111916; --card:#152019; --card2:#1a2820;
+  --border:#24352b; --border2:#2f4436;
+  --text:#e8ede9; --text2:#8fa396; --text3:#5a6e62;
+  --green:#34d399; --green-dim:#065f46; --green-bg:rgba(52,211,153,.12);
+  --blue:#38bdf8; --amber:#fbbf24; --red:#f87171; --purple:#a78bfa;
+  --radius:12px;
+}
+/* 主题：暗夜黑 */
+[data-theme="dark"]{
+  --bg:#0a0a0a; --bg2:#111; --card:#181818; --card2:#222;
+  --border:#2a2a2a; --border2:#3a3a3a;
+  --text:#f0f0f0; --text2:#999; --text3:#666;
+  --green:#22c55e; --green-dim:#14532d; --green-bg:rgba(34,197,94,.12);
+  --blue:#60a5fa; --amber:#f59e0b; --red:#ef4444; --purple:#c084fc;
+}
+/* 主题：深蓝科技 */
+[data-theme="blue"]{
+  --bg:#0a0f1a; --bg2:#0f1623; --card:#131d2e; --card2:#1a2740;
+  --border:#1e3050; --border2:#2a4066;
+  --text:#e2e8f0; --text2:#7d90ad; --text3:#4a5a75;
+  --green:#2dd4bf; --green-dim:#0f766e; --green-bg:rgba(45,212,191,.12);
+  --blue:#60a5fa; --amber:#fbbf24; --red:#f87171; --purple:#818cf8;
+}
+/* 主题：浅色 */
+[data-theme="light"]{
+  --bg:#f5f7f6; --bg2:#fff; --card:#fff; --card2:#eef2ef;
+  --border:#d8e0da; --border2:#c2cdc5;
+  --text:#1a2e22; --text2:#5a6e62; --text3:#9caaa0;
+  --green:#059669; --green-dim:#a7f3d0; --green-bg:rgba(5,150,105,.08);
+  --blue:#0284c7; --amber:#d97706; --red:#dc2626; --purple:#7c3aed;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:'Noto Sans SC',system-ui,sans-serif;
+  min-height:100vh; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums}
+
+/* ===== 布局 ===== */
+.app{display:flex; min-height:100vh}
+.sidebar{
+  width:200px; background:var(--bg2); border-right:1px solid var(--border);
+  padding:24px 0; position:fixed; top:0; left:0; bottom:0; z-index:100;
+  display:flex; flex-direction:column;
+}
+.sidebar-logo{padding:0 20px 24px; border-bottom:1px solid var(--border); margin-bottom:16px}
+.sidebar-logo h1{font-size:16px; font-weight:900; letter-spacing:.5px}
+.sidebar-logo .sub{font-size:11px; color:var(--text2); margin-top:2px}
+.nav{flex:1; padding:0 12px}
+.nav-item{
+  display:flex; align-items:center; gap:10px; padding:10px 12px;
+  border-radius:8px; cursor:pointer; color:var(--text2); font-size:14px;
+  margin-bottom:2px; transition:all .15s; user-select:none;
+}
+.nav-item:hover{background:var(--card); color:var(--text)}
+.nav-item.active{background:var(--green-bg); color:var(--green); font-weight:500}
+.nav-item .icon{width:18px; height:18px; flex-shrink:0}
+.sidebar-footer{padding:16px 20px; border-top:1px solid var(--border); font-size:11px; color:var(--text3)}
+.theme-row{display:flex; gap:8px; margin-bottom:10px}
+.theme-dot{width:18px; height:18px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all .15s}
+.theme-dot:hover{transform:scale(1.15)}
+.theme-dot.active{border-color:var(--text)}
+.data-row{display:flex; gap:6px}
+.data-btn{
+  background:var(--card); border:1px solid var(--border); color:var(--text2);
+  padding:4px 10px; border-radius:6px; font-size:11px; cursor:pointer; font-family:inherit;
+}
+.data-btn:hover{border-color:var(--green); color:var(--green)}
+
+.main{flex:1; margin-left:200px; padding:24px 32px; max-width:calc(100vw - 200px)}
+
+/* ===== 顶部栏 ===== */
+.topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px}
+.topbar h2{font-size:22px; font-weight:700}
+.topbar .week-tag{font-size:12px; color:var(--green); background:var(--green-bg); padding:3px 10px; border-radius:20px; margin-left:10px; font-weight:500}
+.date-nav{display:flex; align-items:center; gap:8px}
+.topbar-right{display:flex; align-items:center; gap:20px; flex-wrap:wrap}
+.week-nav{display:flex; align-items:center; gap:6px}
+.week-select{
+  background:var(--card); border:1px solid var(--border); color:var(--text);
+  padding:6px 12px; border-radius:8px; font-size:13px; font-family:inherit;
+  cursor:pointer; outline:none;
+}
+.week-select:hover{border-color:var(--green)}
+.week-select option{background:var(--card); color:var(--text)}
+.date-nav button{
+  background:var(--card); border:1px solid var(--border); color:var(--text2);
+  width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:16px;
+  display:flex; align-items:center; justify-content:center; transition:all .15s;
+}
+.date-nav button:hover{border-color:var(--green); color:var(--green)}
+.date-picker{
+  background:var(--bg2); border:1px solid var(--border2); border-radius:8px;
+  color:var(--text1); font-size:14px; font-weight:600; padding:6px 10px;
+  font-family:inherit; outline:none; min-width:140px; text-align:center;
+  color-scheme:dark;
+}
+.date-picker:focus{border-color:var(--green)}
+
+/* ===== KPI 卡片 ===== */
+.kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px}
+.kpi{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:18px 20px; position:relative; overflow:hidden;
+}
+.kpi::before{content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--green)}
+.kpi.blue::before{background:var(--blue)}
+.kpi.amber::before{background:var(--amber)}
+.kpi.purple::before{background:var(--purple)}
+.kpi .label{font-size:12px; color:var(--text2); margin-bottom:6px}
+.kpi .value{font-size:28px; font-weight:700; line-height:1.1}
+.kpi .value .unit{font-size:13px; color:var(--text2); font-weight:400; margin-left:4px}
+.kpi .sub{font-size:12px; color:var(--text3); margin-top:6px}
+.kpi .sub.up{color:var(--green)}
+.kpi .sub.down{color:var(--red)}
+
+/* ===== 图表网格 ===== */
+.chart-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px}
+.chart-card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:20px;
+}
+.chart-card.full{grid-column:1/-1}
+.chart-card h3{font-size:14px; font-weight:600; margin-bottom:4px}
+.chart-card .chart-desc{font-size:12px; color:var(--text3); margin-bottom:12px}
+.chart-box{width:100%; height:280px}
+.chart-box.tall{height:320px}
+
+/* ===== Checklist ===== */
+.checklist-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px}
+.check-card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  overflow:hidden;
+}
+.check-card-head{
+  padding:14px 18px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--card2);
+}
+.check-card-head .title{font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px}
+.check-card-head .count{font-size:12px; color:var(--text2)}
+.check-card-head .count.done{color:var(--green)}
+.dot{width:8px; height:8px; border-radius:50%}
+.dot.green{background:var(--green)} .dot.blue{background:var(--blue)}
+.dot.amber{background:var(--amber)} .dot.purple{background:var(--purple)}
+
+.check-list{padding:8px 0; max-height:420px; overflow-y:auto}
+.check-item{
+  display:flex; align-items:flex-start; gap:10px; padding:10px 18px;
+  cursor:pointer; transition:background .12s;
+}
+.check-item:hover{background:rgba(255,255,255,.03)}
+.check-item.done .item-text{color:var(--text3); text-decoration:line-through}
+.checkbox{
+  width:20px; height:20px; border:2px solid var(--border2); border-radius:6px;
+  flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center;
+  transition:all .15s;
+}
+.check-item.done .checkbox{background:var(--green); border-color:var(--green)}
+.checkbox svg{width:12px; height:12px; color:#0b100e; opacity:0; transition:opacity .15s}
+.check-item.done .checkbox svg{opacity:1}
+.item-text{font-size:13.5px; line-height:1.5; flex:1}
+.item-note{font-size:11px; color:var(--text3); margin-top:3px}
+
+/* 备注输入 */
+.note-section{padding:14px 18px; border-top:1px solid var(--border); background:var(--bg2)}
+.note-section label{font-size:12px; color:var(--text2); display:block; margin-bottom:6px}
+.note-section textarea, .note-section input{
+  width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); padding:8px 12px; font-size:13px; font-family:inherit;
+  resize:vertical; min-height:60px; outline:none; transition:border-color .15s;
+}
+.note-section textarea:focus, .note-section input:focus{border-color:var(--green)}
+.note-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px}
+.note-row:last-child{margin-bottom:0}
+
+/* 体重输入 */
+.weight-input-card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:24px; margin-bottom:20px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;
+}
+.weight-input-card .big-input{
+  display:flex; align-items:baseline; gap:8px;
+}
+.weight-input-card input{
+  background:var(--bg); border:1px solid var(--border); border-radius:8px;
+  color:var(--green); font-size:36px; font-weight:700; width:140px; padding:8px 14px;
+  text-align:center; font-family:'JetBrains Mono',monospace; outline:none;
+}
+.weight-input-card input:focus{border-color:var(--green)}
+.weight-input-card .unit{font-size:16px; color:var(--text2)}
+.weight-history{flex:1; min-width:200px}
+.weight-history h4{font-size:13px; color:var(--text2); margin-bottom:8px}
+.wh-row{display:flex; justify-content:space-between; font-size:13px; padding:4px 0; border-bottom:1px solid var(--border)}
+.wh-row:last-child{border:none}
+.wh-row .date{color:var(--text2)}
+.wh-row .val{font-family:'JetBrains Mono',monospace; font-weight:600}
+.wh-row .val.lost{color:var(--green)}
+
+/* toast */
+.toast{
+  position:fixed; bottom:24px; right:24px; background:var(--green); color:#0b100e;
+  padding:10px 20px; border-radius:8px; font-size:13px; font-weight:600;
+  opacity:0; transform:translateY(10px); transition:all .25s; z-index:999;
+}
+.toast.show{opacity:1; transform:translateY(0)}
+
+/* 视图切换 */
+.view{display:none}
+.view.active{display:block}
+
+/* 进度条 */
+.progress-bar{height:6px; background:var(--bg); border-radius:3px; overflow:hidden; margin-top:8px}
+.progress-bar .fill{height:100%; background:var(--green); border-radius:3px; transition:width .3s}
+
+/* 周热力条 */
+.week-strip{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:12px}
+.week-day{
+  background:var(--bg); border-radius:8px; padding:10px 8px; text-align:center;
+  border:1px solid var(--border); cursor:pointer; transition:all .15s;
+}
+.week-day:hover{border-color:var(--green)}
+.week-day.selected{border-color:var(--green); background:var(--green-bg)}
+.week-day .wd{font-size:11px; color:var(--text2)}
+.week-day .dt{font-size:14px; font-weight:700; margin:2px 0}
+.week-day .pct{font-size:11px; color:var(--text3); font-family:'JetBrains Mono',monospace}
+.week-day.all-done .pct{color:var(--green)}
+
+/* 空状态 */
+.empty{text-align:center; padding:40px 20px; color:var(--text3); font-size:13px}
+
+/* 响应式 */
+/* ===== 平板适配 ===== */
+@media(max-width:900px){
+  .sidebar{width:56px; padding:12px 0}
+  .sidebar-logo h1, .sidebar-logo .sub, .nav-item span.label, .sidebar-footer{display:none}
+  .nav-item{justify-content:center; padding:12px 0; margin-bottom:4px}
+  .main{margin-left:56px; padding:16px}
+  .kpi-row{grid-template-columns:repeat(2,1fr); gap:10px}
+  .chart-grid{grid-template-columns:1fr; gap:12px}
+  .checklist-grid{grid-template-columns:1fr; gap:12px}
+  .note-row{grid-template-columns:1fr}
+  .kpi{padding:14px 16px}
+  .kpi .value{font-size:22px}
+  .chart-card{padding:14px}
+  .chart-box{height:240px}
+  .chart-box.tall{height:260px}
+  .topbar{flex-direction:column; align-items:stretch; gap:10px}
+  .topbar-right{justify-content:flex-start}
+}
+
+/* ===== 手机适配 ===== */
+@media(max-width:600px){
+  html{font-size:14px}
+  /* 侧边栏变底部导航 */
+  .sidebar{
+    width:100%; left:0; right:0; bottom:0; top:auto;
+    flex-direction:row; padding:0; border-right:none; border-top:1px solid var(--border);
+    z-index:100;
+  }
+  .sidebar-logo{display:none !important}
+  .nav{display:flex; flex:1; padding:0; justify-content:space-around}
+  .nav-item{flex-direction:column; gap:4px; padding:8px 4px; font-size:10px; margin:0; border-radius:0}
+  .nav-item .icon{width:20px; height:20px}
+  .nav-item span.label{display:block !important; font-size:10px}
+
+  .main{margin-left:0; padding:12px 12px 80px; max-width:100%}
+
+  /* KPI 单列 */
+  .kpi-row{grid-template-columns:1fr 1fr; gap:8px}
+  .kpi{padding:12px 14px}
+  .kpi .value{font-size:20px}
+  .kpi .label{font-size:11px}
+
+  /* 周条紧凑 */
+  .week-strip{gap:3px}
+  .week-day{padding:6px 2px}
+  .week-day .dt{font-size:12px}
+  .week-day .wd{font-size:10px}
+  .week-day .pct{font-size:10px}
+
+  /* 图表 */
+  .chart-card{padding:12px}
+  .chart-box{height:200px}
+  .chart-box.tall{height:220px}
+
+  /* 体重输入卡片 */
+  .weight-input-card{flex-direction:column; align-items:stretch; gap:16px; padding:16px}
+  .weight-input-card input{font-size:28px; width:120px}
+
+  /* checklist */
+  .check-item{padding:8px 12px}
+  .item-text{font-size:13px}
+  .note-section{padding:12px}
+
+  /* topbar */
+  .topbar h2{font-size:18px}
+  .week-select{font-size:12px; max-width:130px; padding:6px 8px}
+  .date-picker{font-size:13px; padding:6px 8px; min-width:120px}
+  .toast{bottom:80px; right:12px; left:12px; text-align:center}
+  /* 手机端：底部导航上方的工具栏 */
+  .sidebar-footer{
+    position:fixed; bottom:54px; left:0; right:0;
+    background:var(--bg2); border-top:1px solid var(--border);
+    padding:6px 12px; display:flex; align-items:center; justify-content:space-between;
+    z-index:99;
+  }
+  .sidebar-footer > div:last-child{display:none}
+  .theme-row{margin-bottom:0; gap:6px}
+  .theme-dot{width:16px; height:16px}
+  .data-btn{padding:3px 8px; font-size:10px}
+  .main{padding-bottom:110px}
+}
+
+/* ===== 登录页 ===== */
+.login-overlay{
+  position:fixed; inset:0; background:var(--bg); z-index:1000;
+  display:flex; align-items:center; justify-content:center;
+}
+.login-box{
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:40px; width:360px; max-width:90vw;
+}
+.login-box h1{font-size:22px; font-weight:900; margin-bottom:8px; text-align:center}
+.login-box .sub{font-size:13px; color:var(--text2); text-align:center; margin-bottom:28px}
+.login-form{display:flex; flex-direction:column; gap:14px}
+.login-form label{font-size:12px; color:var(--text2); display:block; margin-bottom:4px}
+.login-form input{
+  width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); padding:10px 14px; font-size:14px; font-family:inherit; outline:none;
+  transition:border-color .15s;
+}
+.login-form input:focus{border-color:var(--green)}
+.login-btn{
+  background:var(--green); color:#0b100e; border:none; border-radius:8px;
+  padding:12px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit;
+  margin-top:8px; transition:opacity .15s;
+}
+.login-btn:hover{opacity:.9}
+.login-btn:disabled{opacity:.5; cursor:not-allowed}
+.login-error{
+  color:var(--red); font-size:13px; text-align:center; margin-top:12px;
+  min-height:20px;
+}
+.login-hint{font-size:11px; color:var(--text3); text-align:center; margin-top:16px; line-height:1.5}
+</style>
+</head>
+<body>
+
+<!-- 登录页 -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h1>⚡ 健康打卡</h1>
+    <div class="sub">登录后开始今日打卡</div>
+    <div class="login-form">
+      <div>
+        <label>昵称</label>
+        <input type="text" id="loginUser" placeholder="输入你的昵称" autocomplete="username">
+      </div>
+      <div>
+        <label>密码</label>
+        <input type="password" id="loginPass" placeholder="输入密码（首次使用自动注册）" autocomplete="current-password">
+      </div>
+      <button class="login-btn" id="loginBtn">进 入</button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+    <div class="login-hint">首次输入昵称+密码即自动注册<br>数据云端保存，换设备不丢失</div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>健康打卡</h1>
+      <div class="sub">FAT LOSS TRACKER</div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-item active" data-view="global">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        <span class="label">全局概览</span>
+      </div>
+      <div class="nav-item" data-view="overview">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span class="label">周概览</span>
+      </div>
+      <div class="nav-item" data-view="weight">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12l4 7a6 6 0 01-12 0 6 6 0 01-12 0l4-7z"/><path d="M12 22v-8"/></svg>
+        <span class="label">体重记录</span>
+      </div>
+      <div class="nav-item" data-view="diet">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        <span class="label">饮食营养</span>
+      </div>
+      <div class="nav-item" data-view="training">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5l11 11"/><path d="M21 21l-1-1"/><path d="M3 3l1 1"/><path d="M18 22l4-4"/><path d="M2 6l4-4"/><path d="M3 10l7-7"/><path d="M14 21l7-7"/></svg>
+        <span class="label">训练计划</span>
+      </div>
+      <div class="nav-item" data-view="habits">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span class="label">习惯恢复</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="theme-row" id="themeRow">
+        <div class="theme-dot" data-theme="green" title="墨绿" style="background:#34d399"></div>
+        <div class="theme-dot" data-theme="dark" title="纯黑" style="background:#222"></div>
+        <div class="theme-dot" data-theme="blue" title="深蓝" style="background:#2dd4bf"></div>
+        <div class="theme-dot" data-theme="light" title="浅色" style="background:#e2e8f0"></div>
+      </div>
+      <div class="data-row">
+        <button class="data-btn" id="exportBtn" title="导出数据备份">导出</button>
+        <button class="data-btn" id="importBtn" title="导入数据">导入</button>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+      </div>
+      <div style="margin-top:8px;color:var(--text3);font-size:10px">数据自动存在URL中 · 收藏本页即可不丢</div>
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="main">
+    <!-- 顶部周切换 + 日期导航 -->
+    <div class="topbar">
+      <div>
+        <h2 id="viewTitle">概览 <span class="week-tag" id="weekTag">10/12 - 10/18</span></h2>
+      </div>
+      <div class="topbar-right">
+        <div class="week-nav">
+          <button id="prevWeek" title="上一周">‹</button>
+          <select id="weekSelect" class="week-select"></select>
+          <button id="nextWeek" title="下一周">›</button>
+        </div>
+        <div class="date-nav">
+          <button id="prevDay" title="前一天">‹</button>
+          <input type="date" id="datePicker" class="date-picker">
+          <button id="nextDay" title="后一天">›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 周进度条 -->
+    <div class="week-strip" id="weekStrip"></div>
+
+    <!-- ===== 概览视图 ===== -->
+    <div class="view" id="view-overview">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;padding:8px 12px;background:var(--bg2);border-radius:8px">
+        统计口径：本周一（10/12）至今 · 今日实时计入
+      </div>
+      <div class="kpi-row" id="kpiRow"></div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>体重趋势</h3>
+          <div class="chart-desc">起始 68.0kg → 目标 55.0kg · 理论周降 1kg</div>
+          <div class="chart-box" id="chartWeight"></div>
+        </div>
+        <div class="chart-card">
+          <h3>每日完成率</h3>
+          <div class="chart-desc">4大类checklist综合遵守情况</div>
+          <div class="chart-box" id="chartDaily"></div>
+        </div>
+        <div class="chart-card">
+          <h3>四大类遵守率</h3>
+          <div class="chart-desc">本周累计完成比例</div>
+          <div class="chart-box" id="chartCategory"></div>
+        </div>
+        <div class="chart-card">
+          <h3>热量摄入 vs 目标</h3>
+          <div class="chart-desc">目标区间 1450-1550 kcal</div>
+          <div class="chart-box" id="chartCalories"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 全局概览视图 ===== -->
+    <div class="view active" id="view-global">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;padding:8px 12px;background:var(--bg2);border-radius:8px">
+        统计口径：计划第一天（10/12）至所选日期 · 切日期回看历史
+      </div>
+      <div class="kpi-row" id="globalKpiRow"></div>
+      <div class="chart-grid">
+        <div class="chart-card full">
+          <h3>体重变化全周期</h3>
+          <div class="chart-desc">从起始 68.0kg 至今 · 目标 55.0kg</div>
+          <div class="chart-box tall" id="chartGlobalWeight"></div>
+        </div>
+        <div class="chart-card">
+          <h3>每周遵守率对比</h3>
+          <div class="chart-desc">按周聚合的4大类综合完成率</div>
+          <div class="chart-box" id="chartWeeklyCompare"></div>
+        </div>
+        <div class="chart-card">
+          <h3>每日打卡热力图</h3>
+          <div class="chart-desc">颜色越深完成率越高 · 10/12 至今</div>
+          <div class="chart-box" id="chartHeatmap"></div>
+        </div>
+        <div class="chart-card full">
+          <h3>累计热量摄入趋势</h3>
+          <div class="chart-desc">计划目标 vs 实际记录（跨周）</div>
+          <div class="chart-box" id="chartGlobalCalories"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 体重记录视图 ===== -->
+    <div class="view" id="view-weight">
+      <div class="weight-input-card">
+        <div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:8px">今日晨重</div>
+          <div class="big-input">
+            <input type="number" id="weightInput" step="0.1" min="40" max="120" placeholder="0.0">
+            <span class="unit">kg</span>
+          </div>
+        </div>
+        <div class="weight-history" id="weightHistory">
+          <h4>本周记录</h4>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>体重曲线</h3>
+        <div class="chart-desc">含起始体重与目标参考线</div>
+        <div class="chart-box tall" id="chartWeightDetail"></div>
+      </div>
+    </div>
+
+    <!-- ===== 饮食营养视图 ===== -->
+    <div class="view" id="view-diet">
+      <div class="checklist-grid">
+        <div class="check-card">
+          <div class="check-card-head">
+            <div class="title"><span class="dot green"></span>午餐（吃饱）</div>
+            <div class="count" id="lunchCount">0/0</div>
+          </div>
+          <div class="check-list" id="lunchList"></div>
+        </div>
+        <div class="check-card">
+          <div class="check-card-head">
+            <div class="title"><span class="dot blue"></span>晚餐（20:00前）</div>
+            <div class="count" id="dinnerCount">0/0</div>
+          </div>
+          <div class="check-list" id="dinnerList"></div>
+        </div>
+      </div>
+      <div class="check-card">
+        <div class="check-card-head">
+          <div class="title"><span class="dot amber"></span>加餐</div>
+          <div class="count" id="snackCount">0/0</div>
+        </div>
+        <div class="check-list" id="snackList"></div>
+        <div class="note-section">
+          <div class="note-row">
+            <div>
+              <label>实际摄入热量（可选）</label>
+              <input type="number" id="dietCalorie" placeholder="如 1450" step="10">
+            </div>
+            <div>
+              <label>饮食备注（偏差/外食/大餐等）</label>
+              <textarea id="dietNote" placeholder="今天吃了什么偏差..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 训练计划视图 ===== -->
+    <div class="view" id="view-training">
+      <div class="check-card" style="margin-bottom:16px">
+        <div class="check-card-head">
+          <div class="title"><span class="dot green"></span>今日训练清单</div>
+          <div class="count" id="trainCount">0/0</div>
+        </div>
+        <div class="check-list" id="trainList"></div>
+        <div class="note-section">
+          <div class="note-row">
+            <div>
+              <label>步数（如打卡了徒步/散步）</label>
+              <input type="number" id="trainSteps" placeholder="如 8500">
+            </div>
+            <div>
+              <label>实际训练时长（分钟）</label>
+              <input type="number" id="trainMin" placeholder="如 30">
+            </div>
+          </div>
+          <div>
+            <label>训练备注</label>
+            <textarea id="trainNote" placeholder="感受/强度/补充说明..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 习惯恢复视图 ===== -->
+    <div class="view" id="view-habits">
+      <div class="check-card">
+        <div class="check-card-head">
+          <div class="title"><span class="dot purple"></span>今日习惯打卡</div>
+          <div class="count" id="habitCount">0/0</div>
+        </div>
+        <div class="check-list" id="habitList"></div>
+        <div class="note-section">
+          <label>睡眠/状态备注</label>
+          <textarea id="habitNote" placeholder="如：深睡5h，醒来精力不错..."></textarea>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast">已自动保存</div>
+
+<script>
+// ===== 计划数据（每周发新计划时往 weeks 数组追加一个周对象即可） =====
+const PLAN = {
+  startWeight: 68.0,
+  targetWeight: 55.0,
+  weeks: [
+    {
+      label: "冲刺第1周",
+      range: "10/12-10/18",
+      days: [
+        {
+          date: "2026-10-12", wd: "周一", cycle: "D2", calories: 1470,
+          lunch: ["荞麦面60g(干)","清炖牛肉80g","清炒菠菜100g","煮蛋1个","燕麦30g","脱脂奶200ml","核桃1颗","杂粮饭150g"],
+          dinner: ["虾仁100g炒西芹","杂粮粥1碗","凉拌海带100g","杂粮饭150g"],
+          snack: ["无糖酸奶100g"],
+          training: ["居家有氧操25min","午饭后散步15-20min","晚饭后散步15-20min","每坐1h起身3min"],
+          habits: ["23:00前入睡","06:30起床·保7.5h","饮水2000-2500ml","仅无糖茶/白水/黑咖啡","禁含糖饮料/冷冻甜品","禁21:00后夜宵","禁油炸肥肉/酒精","坐姿贴椅+饭后站立15min"]
+        },
+        {
+          date: "2026-10-13", wd: "周二", cycle: "D3", calories: 1460,
+          lunch: ["糙米饭100g","清蒸鱼150g","蒜蓉生菜100g","煮蛋1个","全麦粉20g蛋饼","无糖酸奶150g","杂粮饭150g"],
+          dinner: ["鸡丝凉面(全麦40g+鸡丝80g+黄瓜100g)","杂粮饭150g"],
+          snack: ["小番茄10颗(约150g)"],
+          training: ["弹力带力量(肩背+核心)20min","午饭后散步15-20min","晚饭后散步15-20min","每坐1h起身3min"],
+          habits: ["23:00前入睡","06:30起床·保7.5h","饮水2000-2500ml","仅无糖茶/白水/黑咖啡","禁含糖饮料/冷冻甜品","禁21:00后夜宵","禁油炸肥肉/酒精","坐姿贴椅+饭后站立15min"]
+        },
+        {
+          date: "2026-10-14", wd: "周三", cycle: "D4", calories: 1500,
+          lunch: ["杂粮饭100g","瘦猪肉片100g炒青椒","冬瓜汤1碗","紫薯150g","煮蛋1个","无糖豆浆200ml","杂粮饭150g"],
+          dinner: ["豆腐蔬菜煲150g","藜麦饭50g","杂粮饭150g"],
+          snack: ["橙子1个(约200g)"],
+          training: ["广场舞/夜场(否则居家有氧25min)","午饭后散步15-20min","晚饭后散步15-20min","每坐1h起身3min"],
+          habits: ["23:00前入睡","06:30起床·保7.5h","饮水2000-2500ml","仅无糖茶/白水/黑咖啡","禁含糖饮料/冷冻甜品","禁21:00后夜宵","禁油炸肥肉/酒精","坐姿贴椅+饭后站立15min"]
+        },
+        {
+          date: "2026-10-15", wd: "周四", cycle: "D5", calories: 1480,
+          lunch: ["意面60g(干)","番茄虾仁酱(鲜番茄自熬)","沙拉150g(油醋汁)","煮蛋1个","低脂芝士1片","杂粮饭150g"],
+          dinner: ["蒸蛋羹1份","清炒小白菜100g","红薯半根(约100g)","杂粮饭150g"],
+          snack: ["无糖酸奶100g"],
+          training: ["工间拉伸+20min居家有氧","午饭后散步15-20min","晚饭后散步15-20min","每坐1h起身3min"],
+          habits: ["23:00前入睡","06:30起床·保7.5h","饮水2000-2500ml","仅无糖茶/白水/黑咖啡","禁含糖饮料/冷冻甜品","禁21:00后夜宵","禁油炸肥肉/酒精","坐姿贴椅+饭后站立15min"]
+        },
+        {
+          date: "2026-10-16", wd: "周五", cycle: "D6", calories: 1510,
+          lunch: ["糙米饭100g","白切鸡去皮120g","凉拌木耳100g","煮蛋2个","玉米半根(约100g)","无糖豆浆200ml","杂粮饭150g"],
+          dinner: ["蔬菜豆腐味噌汤1碗","杂粮煎饼薄1张","杂粮饭150g"],
+          snack: ["苹果1个(约200g)"],
+          training: ["居家低冲击HIIT 20min","午饭后散步15-20min","晚饭后散步15-20min","每坐1h起身3min"],
+          habits: ["23:00前入睡","06:30起床·保7.5h","饮水2000-2500ml","仅无糖茶/白水/黑咖啡","禁含糖饮料/冷冻甜品","禁21:00后夜宵","禁油炸肥肉/酒精","坐姿贴椅+饭后站立15min"]
+        },
+        {
+          date: "2026-10-17", wd: "周六", cycle: "D7", calories: 1460,
+          lunch: ["荞麦面60g(干)","鸡胸100g","西兰花100g","燕麦30g","奶200ml","香蕉半根(约100g)","杂粮饭150g"],
+          dinner: ["清蒸蛋1份","炒三丝少油(约150g)","杂粮饭50g","杂粮饭150g"],
+          snack: ["蓝莓100g(约1盒)"],
+          training: ["广场舞/夜场 或 瑜伽拉伸30min","午饭后散步15-20min","晚饭后散步15-20min","每坐1h起身3min"],
+          habits: ["23:00前入睡","06:30起床·保7.5h","饮水2000-2500ml","仅无糖茶/白水/黑咖啡","禁含糖饮料/冷冻甜品","禁21:00后夜宵","禁油炸肥肉/酒精","坐姿贴椅+饭后站立15min"]
+        },
+        {
+          date: "2026-10-18", wd: "周日", cycle: "D8", calories: 1480,
+          lunch: ["杂粮饭100g","煎三文鱼100g","菠菜100g","蛋羹1份","全麦吐司1片","无糖豆浆200ml","杂粮饭150g"],
+          dinner: ["虾仁100g冬瓜汤1碗","凉拌芹菜100g","玉米半根(约100g)","杂粮饭150g"],
+          snack: ["小番茄10颗(约150g)"],
+          training: ["主动恢复·散步40min","全身拉伸","午饭后散步15-20min","晚饭后散步15-20min"],
+          habits: ["23:00前入睡","06:30起床·保7.5h","饮水2000-2500ml","仅无糖茶/白水/黑咖啡","禁含糖饮料/冷冻甜品","禁21:00后夜宵","禁油炸肥肉/酒精","坐姿贴椅+饭后站立15min"]
+        }
+      ]
+    }
+  ]
+};
+
+// ===== 云端配置 =====
+const API_BASE = '/api'; // 部署后如果前后端不同域，改成你的后端地址，如 https://xxx.vercel.app/api
+let currentUser = localStorage.getItem('health-tracker-user') || '';
+let isDataLoaded = false;
+
+// ===== 状态管理 =====
+const STORAGE_KEY = 'health-tracker-v1';
+let state = { weight:{}, diet:{}, training:{}, habits:{} };
+let curWeekIdx = 0;
+let curDayIdx = 0;
+let charts = {};
+
+// ===== 云端数据加载/保存 =====
+async function loadStateFromCloud(){
+  if(!currentUser) return;
+  try{
+    const res = await fetch(`${API_BASE}/data?username=${encodeURIComponent(currentUser)}`);
+    const data = await res.json();
+    if(data.success && data.state){
+      state = data.state;
+      isDataLoaded = true;
+      renderAll();
+      renderGlobal();
+    }
+  }catch(e){
+    console.error('加载数据失败:', e);
+  }
+}
+
+// 保存某一天的数据到云端
+async function saveDayToCloud(date){
+  if(!currentUser || !isDataLoaded) return;
+  const d = getDay(date);
+  if(!d) return;
+  const dayData = {
+    weight: state.weight[date] || null,
+    diet: state.diet[date] || null,
+    training: state.training[date] || null,
+    habits: state.habits[date] || null,
+  };
+  try{
+    await fetch(`${API_BASE}/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: currentUser, date, dayData })
+    });
+  }catch(e){
+    console.error('保存数据失败:', e);
+  }
+}
+function saveState(){
+  // 本地缓存（离线时也能用）
+  localStorage.setItem(STORAGE_KEY + '-' + currentUser, JSON.stringify(state));
+  // 同步到云端
+  saveDayToCloud(curDay().date);
+  showToast();
+}
+function allDays(){ return PLAN.weeks.flatMap(w=>w.days); }
+function todayStr(){
+  const t = new Date();
+  return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+}
+// 从计划第一天到所选日期（全局概览用，跟着日期切换变化）
+function elapsedDays(){
+  const cutoff = curDay().date;
+  return allDays().filter(d=>d.date <= cutoff);
+}
+// 计划第一天到所选日期的自然日天数（用于分母）
+function elapsedNaturalDays(){
+  const days = elapsedDays();
+  if(days.length===0) return 0;
+  const first = new Date(days[0].date);
+  const cutoff = new Date(curDay().date);
+  return Math.round((cutoff - first) / 86400000) + 1;
+}
+function getDay(date){
+  return allDays().find(d=>d.date===date);
+}
+function curWeek(){ return PLAN.weeks[curWeekIdx]; }
+function curDay(){ return curWeek().days[curDayIdx]; }
+
+// 初始化某天的打卡数据结构
+function ensureDayData(date){
+  const d = getDay(date);
+  if(!state.diet[date]) state.diet[date] = {
+    lunch: new Array(d.lunch.length).fill(false),
+    dinner: new Array(d.dinner.length).fill(false),
+    snack: new Array(d.snack.length).fill(false),
+    calorie: '', note: ''
+  };
+  if(!state.training[date]) state.training[date] = {
+    items: new Array(d.training.length).fill(false),
+    steps: '', min: '', note: ''
+  };
+  if(!state.habits[date]) state.habits[date] = {
+    items: new Array(d.habits.length).fill(false),
+    note: ''
+  };
+}
+
+// ===== 视图切换 =====
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    item.classList.add('active');
+    const v = item.dataset.view;
+    document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+    document.getElementById('view-'+v).classList.add('active');
+    const titles = {overview:'周概览',global:'全局概览',weight:'体重记录',diet:'饮食营养',training:'训练计划',habits:'习惯恢复'};
+    document.getElementById('viewTitle').innerHTML = titles[v] + ' <span class="week-tag">'+curWeek().label+'</span>';
+    // 全局概览也显示周选择和日期导航，方便回看历史
+    document.querySelector('.topbar-right').style.display = '';
+    // 周概览和全局概览都隐藏周条（整周/累计视角不需要按天格子）
+    const hideStrip = (v==='overview' || v==='global');
+    document.getElementById('weekStrip').style.display = hideStrip ? 'none' : '';
+    if(v==='overview') setTimeout(renderOverview, 50);
+    if(v==='global') setTimeout(renderGlobal, 50);
+    if(v==='weight') setTimeout(renderWeightChart, 50);
+  });
+});
+
+// ===== 日期切换 =====
+document.getElementById('prevDay').addEventListener('click', ()=>{
+  if(curDayIdx>0){ curDayIdx--; renderAll(); }
+});
+document.getElementById('nextDay').addEventListener('click', ()=>{
+  if(curDayIdx<curWeek().days.length-1){ curDayIdx++; renderAll(); }
+});
+// 日期选择器直接跳日期
+document.getElementById('datePicker').addEventListener('change', e=>{
+  const picked = e.target.value;
+  // 在所有周里找这个日期
+  for(let wi=0; wi<PLAN.weeks.length; wi++){
+    const di = PLAN.weeks[wi].days.findIndex(d=>d.date===picked);
+    if(di>=0){ curWeekIdx=wi; curDayIdx=di; renderAll(); break; }
+  }
+});
+
+// ===== 周切换 =====
+function renderWeekSelect(){
+  const sel = document.getElementById('weekSelect');
+  sel.innerHTML = '';
+  PLAN.weeks.forEach((w,i)=>{
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = w.label + ' (' + w.range + ')';
+    if(i===curWeekIdx) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  document.getElementById('prevWeek').disabled = curWeekIdx<=0;
+  document.getElementById('nextWeek').disabled = curWeekIdx>=PLAN.weeks.length-1;
+}
+function switchWeek(idx){
+  if(idx<0 || idx>=PLAN.weeks.length) return;
+  curWeekIdx = idx;
+  curDayIdx = 0;
+  renderAll();
+}
+document.getElementById('prevWeek').addEventListener('click', ()=>switchWeek(curWeekIdx-1));
+document.getElementById('nextWeek').addEventListener('click', ()=>switchWeek(curWeekIdx+1));
+document.getElementById('weekSelect').addEventListener('change', e=>switchWeek(+e.target.value));
+
+// ===== 周条渲染 =====
+function renderWeekStrip(){
+  const strip = document.getElementById('weekStrip');
+  strip.innerHTML = '';
+  curWeek().days.forEach((d,i)=>{
+    let pct = 0;
+    try{ pct = dayCompletionRate(d.date); }catch(e){ pct = 0; }
+    const el = document.createElement('div');
+    el.className = 'week-day' + (i===curDayIdx?' selected':'') + (pct===100?' all-done':'');
+    el.innerHTML = `<div class="wd">${d.wd}</div><div class="dt">${d.date.slice(5)}</div><div class="pct">${pct}%</div>`;
+    el.addEventListener('click', ()=>{ curDayIdx=i; renderAll(); });
+    strip.appendChild(el);
+  });
+}
+
+// 计算某天完成率
+function dayCompletionRate(date){
+  ensureDayData(date);
+  const d = getDay(date);
+  const diet = state.diet[date];
+  const train = state.training[date];
+  const hab = state.habits[date];
+  let total = 0, done = 0;
+  [diet.lunch, diet.dinner, diet.snack].forEach(arr=>{ total+=arr.length; done+=arr.filter(Boolean).length; });
+  total += train.items.length; done += train.items.filter(Boolean).length;
+  total += hab.items.length; done += hab.items.filter(Boolean).length;
+  return total? Math.round(done/total*100) : 0;
+}
+
+// ===== Checkbox 渲染 =====
+function makeCheckItem(text, checked, onToggle){
+  const item = document.createElement('div');
+  item.className = 'check-item' + (checked?' done':'');
+  item.innerHTML = `
+    <div class="checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div class="item-text">${text}</div>`;
+  item.addEventListener('click', ()=>{ onToggle(); renderAll(); });
+  return item;
+}
+
+function renderDiet(){
+  const d = curDay();
+  ensureDayData(d.date);
+  const dd = state.diet[d.date];
+  // lunch
+  const ll = document.getElementById('lunchList');
+  ll.innerHTML='';
+  d.lunch.forEach((t,i)=>{
+    ll.appendChild(makeCheckItem(t, dd.lunch[i], ()=>{ dd.lunch[i]=!dd.lunch[i]; saveState(); }));
+  });
+  document.getElementById('lunchCount').textContent = dd.lunch.filter(Boolean).length+'/'+d.lunch.length;
+  document.getElementById('lunchCount').className = 'count' + (dd.lunch.every(Boolean)?' done':'');
+  // dinner
+  const dl = document.getElementById('dinnerList');
+  dl.innerHTML='';
+  d.dinner.forEach((t,i)=>{
+    dl.appendChild(makeCheckItem(t, dd.dinner[i], ()=>{ dd.dinner[i]=!dd.dinner[i]; saveState(); }));
+  });
+  document.getElementById('dinnerCount').textContent = dd.dinner.filter(Boolean).length+'/'+d.dinner.length;
+  document.getElementById('dinnerCount').className = 'count' + (dd.dinner.every(Boolean)?' done':'');
+  // snack
+  const sl = document.getElementById('snackList');
+  sl.innerHTML='';
+  d.snack.forEach((t,i)=>{
+    sl.appendChild(makeCheckItem(t, dd.snack[i], ()=>{ dd.snack[i]=!dd.snack[i]; saveState(); }));
+  });
+  document.getElementById('snackCount').textContent = dd.snack.filter(Boolean).length+'/'+d.snack.length;
+  document.getElementById('snackCount').className = 'count' + (dd.snack.every(Boolean)?' done':'');
+  // inputs
+  document.getElementById('dietCalorie').value = dd.calorie||'';
+  document.getElementById('dietNote').value = dd.note||'';
+}
+
+function renderTraining(){
+  const d = curDay();
+  ensureDayData(d.date);
+  const td = state.training[d.date];
+  const tl = document.getElementById('trainList');
+  tl.innerHTML='';
+  d.training.forEach((t,i)=>{
+    tl.appendChild(makeCheckItem(t, td.items[i], ()=>{ td.items[i]=!td.items[i]; saveState(); }));
+  });
+  document.getElementById('trainCount').textContent = td.items.filter(Boolean).length+'/'+d.training.length;
+  document.getElementById('trainCount').className = 'count' + (td.items.every(Boolean)?' done':'');
+  document.getElementById('trainSteps').value = td.steps||'';
+  document.getElementById('trainMin').value = td.min||'';
+  document.getElementById('trainNote').value = td.note||'';
+}
+
+function renderHabits(){
+  const d = curDay();
+  ensureDayData(d.date);
+  const hd = state.habits[d.date];
+  const hl = document.getElementById('habitList');
+  hl.innerHTML='';
+  d.habits.forEach((t,i)=>{
+    hl.appendChild(makeCheckItem(t, hd.items[i], ()=>{ hd.items[i]=!hd.items[i]; saveState(); }));
+  });
+  document.getElementById('habitCount').textContent = hd.items.filter(Boolean).length+'/'+d.habits.length;
+  document.getElementById('habitCount').className = 'count' + (hd.items.every(Boolean)?' done':'');
+  document.getElementById('habitNote').value = hd.note||'';
+}
+
+// ===== 备注/输入绑定（一次性绑定，防抖自动保存） =====
+function debounce(fn, ms){
+  let t; return function(){ clearTimeout(t); t=setTimeout(()=>fn.apply(this,arguments),ms); };
+}
+function bindAllInputs(){
+  const map = {
+    dietCalorie:  ()=>{ const d=curDay(); ensureDayData(d.date); state.diet[d.date].calorie=document.getElementById('dietCalorie').value; },
+    dietNote:     ()=>{ const d=curDay(); ensureDayData(d.date); state.diet[d.date].note=document.getElementById('dietNote').value; },
+    trainSteps:   ()=>{ const d=curDay(); ensureDayData(d.date); state.training[d.date].steps=document.getElementById('trainSteps').value; },
+    trainMin:     ()=>{ const d=curDay(); ensureDayData(d.date); state.training[d.date].min=document.getElementById('trainMin').value; },
+    trainNote:    ()=>{ const d=curDay(); ensureDayData(d.date); state.training[d.date].note=document.getElementById('trainNote').value; },
+    habitNote:    ()=>{ const d=curDay(); ensureDayData(d.date); state.habits[d.date].note=document.getElementById('habitNote').value; }
+  };
+  Object.entries(map).forEach(([id, fn])=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input', debounce(()=>{ fn(); saveState(); }, 400));
+  });
+}
+
+// ===== 体重 =====
+function renderWeight(){
+  const d = curDay();
+  document.getElementById('weightInput').value = state.weight[d.date]||'';
+  // history
+  const wh = document.getElementById('weightHistory');
+  wh.innerHTML = '<h4>本周记录</h4>';
+  const entries = Object.entries(state.weight).sort((a,b)=>a[0].localeCompare(b[0]));
+  if(entries.length===0){
+    wh.innerHTML += '<div style="font-size:12px;color:var(--text3);padding:8px 0">暂无记录，今天开始记第一笔</div>';
+  }
+  entries.forEach(([date, w], idx)=>{
+    const dObj = getDay(date);
+    const row = document.createElement('div');
+    row.className = 'wh-row';
+    const diff = idx>0 ? (w - entries[idx-1][1]) : 0;
+    const diffStr = diff<0 ? `<span style="color:var(--green)">↓${Math.abs(diff).toFixed(1)}</span>` :
+                    diff>0 ? `<span style="color:var(--red)">↑${diff.toFixed(1)}</span>` : '';
+    row.innerHTML = `<span class="date">${date.slice(5)} ${dObj?dObj.wd:''}</span><span class="val">${w.toFixed(1)} kg ${diffStr}</span>`;
+    wh.appendChild(row);
+  });
+}
+
+document.getElementById('weightInput').addEventListener('input', debounce(e=>{
+  const v = parseFloat(e.target.value);
+  if(v && v>40 && v<120){ state.weight[curDay().date] = v; saveState(); renderWeight(); }
+}, 500));
+
+// ===== 概览图表 =====
+function renderOverview(){
+  renderKPIs();
+  renderWeightChart();
+  renderDailyChart();
+  renderCategoryChart();
+  renderCalorieChart();
+}
+
+function renderKPIs(){
+  const d = curDay();
+  // 取所选日期的体重（没有就用之前最后一次记录）
+  const weights = Object.entries(state.weight).filter(([date])=>date<=d.date).sort();
+  const curW = weights.length? weights[weights.length-1][1] : PLAN.startWeight;
+  const totalLost = PLAN.startWeight - curW;
+  const todayPct = dayCompletionRate(d.date);
+  // 本周平均遵守率：从周一到今天（含当天实时进度）
+  let sum=0, passedDays=0;
+  for(let i=0; i<=curDayIdx; i++){
+    sum += dayCompletionRate(curWeek().days[i].date);
+    passedDays++;
+  }
+  const avgPct = passedDays>0 ? Math.round(sum/passedDays) : 0;
+
+  const kpi = document.getElementById('kpiRow');
+  kpi.innerHTML = `
+    <div class="kpi">
+      <div class="label">当前晨重</div>
+      <div class="value">${curW.toFixed(1)}<span class="unit">kg</span></div>
+      <div class="sub ${totalLost>0?'up':'down'}">${totalLost>=0?`已减 ${totalLost.toFixed(1)}kg`:`反弹 ${Math.abs(totalLost).toFixed(1)}kg`} · 目标 ${PLAN.targetWeight}kg</div>
+    </div>
+    <div class="kpi blue">
+      <div class="label">距本周目标还差</div>
+      <div class="value">${(curW - (PLAN.startWeight - curWeekIdx - 1)).toFixed(1)}<span class="unit">kg</span></div>
+      <div class="sub">本周日目标 ${(PLAN.startWeight - curWeekIdx - 1).toFixed(1)}kg · 按 1kg/周</div>
+    </div>
+    <div class="kpi amber">
+      <div class="label">本周平均遵守率</div>
+      <div class="value">${avgPct}<span class="unit">%</span></div>
+      <div class="sub">周一至昨日 · 4大类checklist综合</div>
+    </div>
+    <div class="kpi purple">
+      <div class="label">今日完成度 <span style="font-size:10px;color:var(--text3);font-weight:400">（实时）</span></div>
+      <div class="value">${todayPct}<span class="unit">%</span></div>
+      <div class="sub">${d.wd} · ${d.cycle} · 目标${d.calories}kcal</div>
+    </div>`;
+}
+
+function commonGrid(){
+  return { left:40, right:20, top:30, bottom:30 };
+}
+function axisStyle(){
+  return {
+    axisLine:{lineStyle:{color:'#2f4436'}},
+    axisLabel:{color:'#8fa396', fontSize:11, fontFamily:'JetBrains Mono'},
+    splitLine:{lineStyle:{color:'rgba(47,68,54,.4)'}}
+  };
+}
+
+function renderWeightChart(){
+  const el = document.getElementById('chartWeight');
+  if(!el) return;
+  if(charts.w) charts.w.dispose();
+  charts.w = echarts.init(el);
+  const all = allDays();
+  const dates = all.map(d=>d.date.slice(5));
+  const weightData = all.map(d=> state.weight[d.date] || null);
+  charts.w.setOption({
+    grid: commonGrid(),
+    tooltip:{trigger:'axis', backgroundColor:'#152019', borderColor:'#24352b', textStyle:{color:'#e8ede9'}},
+    xAxis:{type:'category', data:dates, ...axisStyle()},
+    yAxis:{type:'value', min:v=>Math.floor(v.min-1), ...axisStyle(), scale:true},
+    series:[
+      {name:'实际体重', type:'line', data:weightData, smooth:true,
+        lineStyle:{color:'#34d399', width:3}, itemStyle:{color:'#34d399'},
+        markLine:{silent:true, lineStyle:{color:'#fbbf24', type:'dashed'},
+          data:[{yAxis:PLAN.startWeight, label:{formatter:'起始'+PLAN.startWeight+'kg', color:'#fbbf24', fontSize:10}}]
+        }
+      },
+      {name:'理论目标', type:'line', data:all.map((d,i)=>+(PLAN.startWeight-i).toFixed(1)),
+        lineStyle:{color:'#38bdf8', type:'dashed', width:1.5}, itemStyle:{opacity:0}, symbol:'none'}
+    ]
+  });
+}
+
+function renderWeightChartDetail(){
+  const el = document.getElementById('chartWeightDetail');
+  if(!el) return;
+  if(charts.wd) charts.wd.dispose();
+  charts.wd = echarts.init(el);
+  const all = allDays();
+  const dates = all.map(d=>d.date.slice(5)+' '+d.wd);
+  const weightData = all.map(d=> state.weight[d.date] || null);
+  charts.wd.setOption({
+    grid: commonGrid(),
+    tooltip:{trigger:'axis', backgroundColor:'#152019', borderColor:'#24352b', textStyle:{color:'#e8ede9'}},
+    xAxis:{type:'category', data:dates, ...axisStyle()},
+    yAxis:{type:'value', min:v=>Math.floor(v.min-1), ...axisStyle(), scale:true},
+    series:[{
+      name:'晨重', type:'line', data:weightData, smooth:true,
+      lineStyle:{color:'#34d399', width:3}, itemStyle:{color:'#34d399', size:8},
+      areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[
+        {offset:0,color:'rgba(52,211,153,.3)'},{offset:1,color:'rgba(52,211,153,0)'}]}},
+      markLine:{silent:true, lineStyle:{color:'#f87171', type:'dashed'},
+        data:[{yAxis:PLAN.targetWeight, label:{formatter:'目标55kg', color:'#f87171', fontSize:10}}]}
+    }]
+  });
+}
+
+function renderDailyChart(){
+  const el = document.getElementById('chartDaily');
+  if(!el) return;
+  if(charts.d) charts.d.dispose();
+  charts.d = echarts.init(el);
+  const dates = curWeek().days.map(d=>d.date.slice(5));
+  const pcts = curWeek().days.map(d=>dayCompletionRate(d.date));
+  charts.d.setOption({
+    grid: commonGrid(),
+    tooltip:{trigger:'axis', backgroundColor:'#152019', borderColor:'#24352b', textStyle:{color:'#e8ede9'},
+      formatter:p=>`${p[0].name}<br/>完成率: <b>${p[0].value}%</b>`},
+    xAxis:{type:'category', data:dates, ...axisStyle()},
+    yAxis:{type:'value', max:100, ...axisStyle()},
+    series:[{
+      type:'bar', data:pcts, barWidth:'50%',
+      itemStyle:{color:p=> p.value===100?'#34d399':p.value>=70?'#38bdf8':p.value>=40?'#fbbf24':'#f87171',
+        borderRadius:[4,4,0,0]}
+    }]
+  });
+}
+
+function renderCategoryChart(){
+  const el = document.getElementById('chartCategory');
+  if(!el) return;
+  if(charts.c) charts.c.dispose();
+  charts.c = echarts.init(el);
+  // 计算4大类本周完成率
+  const cats = [
+    {name:'饮食', key:'diet'},
+    {name:'训练', key:'training'},
+    {name:'习惯', key:'habits'},
+    {name:'体重', key:'weight'}
+  ];
+  const data = cats.map(c=>{
+    let total=0, done=0;
+    // 从周一到今天（含当天实时进度）
+    for(let i=0; i<=curDayIdx; i++){
+      const d = curWeek().days[i];
+      ensureDayData(d.date);
+      if(c.key==='diet'){
+        [state.diet[d.date].lunch, state.diet[d.date].dinner, state.diet[d.date].snack].forEach(arr=>{
+          total+=arr.length; done+=arr.filter(Boolean).length;
+        });
+      } else if(c.key==='training'){
+        total+=state.training[d.date].items.length;
+        done+=state.training[d.date].items.filter(Boolean).length;
+      } else if(c.key==='habits'){
+        total+=state.habits[d.date].items.length;
+        done+=state.habits[d.date].items.filter(Boolean).length;
+      } else if(c.key==='weight'){
+        total+=1;
+        if(state.weight[d.date]!=null) done+=1;
+      }
+    }
+    return {name:c.name, value: total? Math.round(done/total*100):0};
+  });
+  charts.c.setOption({
+    grid:{left:60, right:40, top:10, bottom:20},
+    tooltip:{trigger:'axis', backgroundColor:'#152019', borderColor:'#24352b', textStyle:{color:'#e8ede9'}},
+    xAxis:{type:'value', max:100, ...axisStyle()},
+    yAxis:{type:'category', data:data.map(d=>d.name), ...axisStyle(), axisLine:{show:false}},
+    series:[{
+      type:'bar', data:data.map(d=>d.value), barWidth:'40%',
+      itemStyle:{color:p=>['#34d399','#38bdf8','#a78bfa','#fbbf24'][p.dataIndex], borderRadius:[0,4,4,0]},
+      label:{show:true, position:'right', color:'#e8ede9', fontSize:12, fontFamily:'JetBrains Mono', formatter:'{c}%'}
+    }]
+  });
+}
+
+function renderCalorieChart(){
+  const el = document.getElementById('chartCalories');
+  if(!el) return;
+  if(charts.ca) charts.ca.dispose();
+  charts.ca = echarts.init(el);
+  const dates = curWeek().days.map(d=>d.date.slice(5));
+  const planned = curWeek().days.map(d=>d.calories);
+  const actual = curWeek().days.map(d=> state.diet[d.date] && state.diet[d.date].calorie ? +state.diet[d.date].calorie : null);
+  charts.ca.setOption({
+    grid: commonGrid(),
+    tooltip:{trigger:'axis', backgroundColor:'#152019', borderColor:'#24352b', textStyle:{color:'#e8ede9'}},
+    xAxis:{type:'category', data:dates, ...axisStyle()},
+    yAxis:{type:'value', ...axisStyle(), min:1200, max:1700},
+    series:[
+      {name:'计划', type:'bar', data:planned, barWidth:'35%', itemStyle:{color:'rgba(56,189,248,.5)', borderRadius:[3,3,0,0]}},
+      {name:'实际', type:'bar', data:actual, barWidth:'35%', itemStyle:{color:'#34d399', borderRadius:[3,3,0,0]}}
+    ],
+    legend:{textStyle:{color:'#8fa396', fontSize:11}, top:0, right:0}
+  });
+}
+
+// ===== 全局概览 =====
+function renderGlobal(){
+  renderGlobalKPIs();
+  renderGlobalWeight();
+  renderWeeklyCompare();
+  renderHeatmap();
+  renderGlobalCalories();
+}
+
+function renderGlobalKPIs(){
+  const all = elapsedDays();
+  // 取所选日期及之前的最后一次体重记录
+  const cutoffDate = curDay().date;
+  const weights = Object.entries(state.weight).filter(([date])=>date<=cutoffDate).sort();
+  const curW = weights.length? weights[weights.length-1][1] : PLAN.startWeight;
+  const totalLost = PLAN.startWeight - curW;
+  // 全局遵守率（只算到今天）
+  let total=0, done=0;
+  all.forEach(d=>{
+    ensureDayData(d.date);
+    [state.diet[d.date].lunch, state.diet[d.date].dinner, state.diet[d.date].snack].forEach(arr=>{
+      total+=arr.length; done+=arr.filter(Boolean).length;
+    });
+    total+=state.training[d.date].items.length;
+    done+=state.training[d.date].items.filter(Boolean).length;
+    total+=state.habits[d.date].items.length;
+    done+=state.habits[d.date].items.filter(Boolean).length;
+  });
+  const globalPct = total? Math.round(done/total*100) : 0;
+  // 已打卡天数（有任意完成的天）/ 自然日天数
+  const checkedDays = all.filter(d=>dayCompletionRate(d.date)>0).length;
+  const totalDays = elapsedNaturalDays();
+  // 已记录体重天数
+  const weightDays = all.filter(d=>state.weight[d.date]!=null).length;
+  // 距目标
+  const toGoal = curW - PLAN.targetWeight;
+
+  document.getElementById('globalKpiRow').innerHTML = `
+    <div class="kpi">
+      <div class="label">累计减重</div>
+      <div class="value">${totalLost.toFixed(1)}<span class="unit">kg</span></div>
+      <div class="sub ${totalLost>0?'up':'down'}">从 ${PLAN.startWeight.toFixed(1)}kg 到 ${curW.toFixed(1)}kg</div>
+    </div>
+    <div class="kpi blue">
+      <div class="label">全局遵守率</div>
+      <div class="value">${globalPct}<span class="unit">%</span></div>
+      <div class="sub">${done}/${total} 项checklist已完成</div>
+    </div>
+    <div class="kpi amber">
+      <div class="label">已打卡天数</div>
+      <div class="value">${checkedDays}<span class="unit">/${totalDays}天</span></div>
+      <div class="sub">体重记录${weightDays}天 · 计划进行中</div>
+    </div>
+    <div class="kpi purple">
+      <div class="label">距最终目标</div>
+      <div class="value">${toGoal.toFixed(1)}<span class="unit">kg</span></div>
+      <div class="sub">目标 ${PLAN.targetWeight}kg · 按1kg/周约${Math.max(0,Math.ceil(toGoal))}周</div>
+    </div>`;
+}
+
+function renderGlobalWeight(){
+  const el = document.getElementById('chartGlobalWeight');
+  if(!el) return;
+  if(charts.gw) charts.gw.dispose();
+  charts.gw = echarts.init(el);
+  const all = elapsedDays();
+  const dates = all.map(d=>d.date.slice(5));
+  const weightData = all.map(d=> state.weight[d.date] || null);
+  // 默认显示最近15天
+  const startPct = all.length>15 ? Math.round((all.length-15)/all.length*100) : 0;
+  charts.gw.setOption({
+    grid: {left:40, right:20, top:30, bottom:60},
+    tooltip:{trigger:'axis', backgroundColor:'#152019', borderColor:'#24352b', textStyle:{color:'#e8ede9'}},
+    xAxis:{type:'category', data:dates, ...axisStyle()},
+    yAxis:{type:'value', min:v=>Math.floor(v.min-1), ...axisStyle(), scale:true},
+    dataZoom:[
+      {type:'slider', start:startPct, end:100, height:20, bottom:10,
+        borderColor:'#2f4436', backgroundColor:'#0b100e', fillerColor:'rgba(52,211,153,.15)',
+        handleStyle:{color:'#34d399'}, textStyle:{color:'#8fa396', fontSize:10}},
+      {type:'inside', start:startPct, end:100}
+    ],
+    series:[
+      {name:'实际体重', type:'line', data:weightData, smooth:true,
+        lineStyle:{color:'#34d399', width:3}, itemStyle:{color:'#34d399', size:7},
+        areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[
+          {offset:0,color:'rgba(52,211,153,.25)'},{offset:1,color:'rgba(52,211,153,0)'}]}},
+        markLine:{silent:true, lineStyle:{color:'#f87171', type:'dashed'},
+          data:[{yAxis:PLAN.targetWeight, label:{formatter:'目标55kg', color:'#f87171', fontSize:10}}]}
+      },
+      {name:'理论目标线', type:'line', data:all.map((d,i)=>+(PLAN.startWeight - i/7).toFixed(2)),
+        lineStyle:{color:'#38bdf8', type:'dashed', width:1.5}, itemStyle:{opacity:0}, symbol:'none'}
+    ]
+  });
+}
+
+function renderWeeklyCompare(){
+  const el = document.getElementById('chartWeeklyCompare');
+  if(!el) return;
+  if(charts.wc) charts.wc.dispose();
+  charts.wc = echarts.init(el);
+  const labels = PLAN.weeks.map(w=>w.label);
+  const pcts = PLAN.weeks.map(w=>{
+    let sum=0; w.days.forEach(d=>sum+=dayCompletionRate(d.date));
+    return Math.round(sum/w.days.length);
+  });
+  charts.wc.setOption({
+    grid: commonGrid(),
+    tooltip:{trigger:'axis', backgroundColor:'#152019', borderColor:'#24352b', textStyle:{color:'#e8ede9'}},
+    xAxis:{type:'category', data:labels, ...axisStyle()},
+    yAxis:{type:'value', max:100, ...axisStyle()},
+    series:[{
+      type:'bar', data:pcts, barWidth:'40%',
+      itemStyle:{color:p=> p.value>=80?'#34d399':p.value>=50?'#38bdf8':'#fbbf24', borderRadius:[6,6,0,0]},
+      label:{show:true, position:'top', color:'#e8ede9', fontSize:12, fontFamily:'JetBrains Mono', formatter:'{c}%'}
+    }]
+  });
+}
+
+function renderHeatmap(){
+  const el = document.getElementById('chartHeatmap');
+  if(!el) return;
+  if(charts.hm) charts.hm.dispose();
+  charts.hm = echarts.init(el);
+  const all = elapsedDays();
+  const data = all.map(d=>{
+    return [d.date, dayCompletionRate(d.date)];
+  });
+  charts.hm.setOption({
+    tooltip:{backgroundColor:'#152019', borderColor:'#24352b', textStyle:{color:'#e8ede9'},
+      formatter:p=>`${p.data[0]}<br/>完成率: <b>${p.data[1]}%</b>`},
+    visualMap:{min:0, max:100, show:false,
+      inRange:{color:['#1a2820','#065f46','#34d399']}},
+    series:[{
+      type:'heatmap',
+      data:data.map(x=>[x[0],0,x[1]]),
+      itemStyle:{borderColor:'#0b100e', borderWidth:2, borderRadius:4},
+      label:{show:true, color:'#fff', fontSize:10, fontFamily:'JetBrains Mono', formatter:p=>p.data[2]+'%'}
+    }],
+    xAxis:{type:'category', data:all.map(d=>d.date.slice(5)), ...axisStyle(), axisLabel:{...axisStyle().axisLabel, rotate:45}},
+    yAxis:{show:false, type:'category', data:['完成率']}
+  });
+}
+
+function renderGlobalCalories(){
+  const el = document.getElementById('chartGlobalCalories');
+  if(!el) return;
+  if(charts.gc) charts.gc.dispose();
+  charts.gc = echarts.init(el);
+  const all = elapsedDays();
+  const dates = all.map(d=>d.date.slice(5));
+  const planned = all.map(d=>d.calories);
+  const actual = all.map(d=> state.diet[d.date] && state.diet[d.date].calorie ? +state.diet[d.date].calorie : null);
+  const startPct = all.length>15 ? Math.round((all.length-15)/all.length*100) : 0;
+  charts.gc.setOption({
+    grid: {left:40, right:20, top:30, bottom:60},
+    tooltip:{trigger:'axis', backgroundColor:'#152019', borderColor:'#24352b', textStyle:{color:'#e8ede9'}},
+    xAxis:{type:'category', data:dates, ...axisStyle()},
+    yAxis:{type:'value', ...axisStyle(), min:1200, max:1700},
+    dataZoom:[
+      {type:'slider', start:startPct, end:100, height:20, bottom:10,
+        borderColor:'#2f4436', backgroundColor:'#0b100e', fillerColor:'rgba(52,211,153,.15)',
+        handleStyle:{color:'#34d399'}, textStyle:{color:'#8fa396', fontSize:10}},
+      {type:'inside', start:startPct, end:100}
+    ],
+    series:[
+      {name:'计划', type:'bar', data:planned, barWidth:'40%', itemStyle:{color:'rgba(56,189,248,.4)', borderRadius:[3,3,0,0]}},
+      {name:'实际', type:'bar', data:actual, barWidth:'40%', itemStyle:{color:'#34d399', borderRadius:[3,3,0,0]}}
+    ],
+    legend:{textStyle:{color:'#8fa396', fontSize:11}, top:0, right:0}
+  });
+}
+
+// ===== Toast =====
+let toastTimer;
+function showToast(){
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 1200);
+}
+
+// ===== 主渲染 =====
+function renderAll(){
+  const d = curDay();
+  const w = curWeek();
+  // 先更新日期显示，确保切日期时UI立即响应
+  const dp = document.getElementById('datePicker');
+  if(dp) dp.value = d.date;
+  const _wt = document.getElementById('weekTag');
+  if(_wt) _wt.textContent = w.range;
+  // 各模块分别try，一个出错不影响其他
+  try{ renderDiet(); }catch(e){ console.warn('diet render error', e); }
+  try{ renderTraining(); }catch(e){ console.warn('training render error', e); }
+  try{ renderHabits(); }catch(e){ console.warn('habits render error', e); }
+  try{ renderWeight(); }catch(e){ console.warn('weight render error', e); }
+  try{ renderWeekSelect(); }catch(e){}
+  try{ renderWeekStrip(); }catch(e){}
+  // 强制同步周条选中状态（防止renderWeekStrip异常导致选中框不更新）
+  const strip = document.getElementById('weekStrip');
+  if(strip){
+    Array.from(strip.children).forEach((el,i)=>{
+      el.classList.toggle('selected', i===curDayIdx);
+    });
+  }
+  // 概览视图切日期后重算KPI和图表
+  const activeNav = document.querySelector('.nav-item.active');
+  if(activeNav){
+    const v = activeNav.dataset.view;
+    if(v==='overview') setTimeout(renderOverview, 50);
+    if(v==='global') setTimeout(renderGlobal, 50);
+  }
+}
+
+// ===== 主题切换 =====
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('health-tracker-theme', t);
+  document.querySelectorAll('.theme-dot').forEach(d=>{
+    d.classList.toggle('active', d.dataset.theme===t);
+  });
+  // 重绘图表以适应主题
+  setTimeout(()=>Object.values(charts).forEach(c=>c&&c.resize()), 50);
+}
+document.querySelectorAll('.theme-dot').forEach(d=>{
+  d.addEventListener('click', ()=>applyTheme(d.dataset.theme));
+});
+
+// ===== 数据导出/导入 =====
+function doExport(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '健康打卡备份_'+todayStr()+'.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  doExport();
+  localStorage.setItem('health-tracker-last-export', todayStr());
+  showToast('已导出备份文件');
+});
+// 每周日第一次访问自动导出
+function autoExportIfNeeded(){
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0=周日
+  if(dayOfWeek !== 0) return; // 不是周日不触发
+  // 记录本周是否已导出（按周标识：年-周数）
+  const weekKey = 'backup-'+today.getFullYear()+'-W'+Math.ceil(today.getDate()/7);
+  if(localStorage.getItem(weekKey)) return;
+  setTimeout(()=>{
+    doExport();
+    localStorage.setItem(weekKey, '1');
+  }, 1500);
+}
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(!data.weight || !data.diet || !data.training || !data.habits){
+        alert('文件格式不对，不是有效的备份'); return;
+      }
+      if(confirm('导入将覆盖当前所有打卡数据，确定？')){
+        state = data;
+        saveState();
+        renderAll();
+        renderGlobal();
+        showToast('导入成功');
+      }
+    }catch(err){ alert('文件解析失败：'+err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ===== 登录逻辑 =====
+async function doLogin(){
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value.trim();
+  const errorEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+
+  if(!username || !password){
+    errorEl.textContent = '请输入昵称和密码';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '登录中...';
+  errorEl.textContent = '';
+
+  try{
+    const res = await fetch(`${API_BASE}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if(data.success){
+      currentUser = username;
+      localStorage.setItem('health-tracker-user', username);
+      // 先加载本地缓存，再从云端刷新
+      const localRaw = localStorage.getItem(STORAGE_KEY + '-' + username);
+      if(localRaw){
+        try{ state = JSON.parse(localRaw); }catch(e){}
+      }
+      document.getElementById('loginOverlay').style.display = 'none';
+      // 初始化应用
+      initApp();
+      // 从云端加载最新数据
+      await loadStateFromCloud();
+    } else {
+      errorEl.textContent = data.error || '登录失败';
+    }
+  }catch(e){
+    errorEl.textContent = '网络错误，请重试';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '进 入';
+}
+
+// 启动：先检查登录状态
+function boot(){
+  // 绑定登录按钮
+  document.getElementById('loginBtn').addEventListener('click', doLogin);
+  document.getElementById('loginPass').addEventListener('keydown', e=>{
+    if(e.key === 'Enter') doLogin();
+  });
+
+  // 如果已经登录过，自动登录
+  if(currentUser){
+    document.getElementById('loginOverlay').style.display = 'none';
+    // 先加载本地缓存
+    const localRaw = localStorage.getItem(STORAGE_KEY + '-' + currentUser);
+    if(localRaw){
+      try{ state = JSON.parse(localRaw); }catch(e){}
+    }
+    initApp();
+    // 从云端加载最新数据
+    loadStateFromCloud();
+  } else {
+    // 没登录，显示登录页
+    document.getElementById('loginUser').focus();
+  }
+}
+
+// 启动：定位到今天
+function initApp(){
+  const today = new Date();
+  const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  // 遍历所有周找今天
+  for(let wi=0; wi<PLAN.weeks.length; wi++){
+    const di = PLAN.weeks[wi].days.findIndex(d=>d.date===todayStr);
+    if(di>=0){ curWeekIdx=wi; curDayIdx=di; break; }
+  }
+  bindAllInputs();
+  // 恢复主题
+  const savedTheme = localStorage.getItem('health-tracker-theme') || 'green';
+  applyTheme(savedTheme);
+  renderAll();
+  // 全局概览也显示日期导航，方便回看历史；只隐藏周条
+  document.getElementById('weekStrip').style.display = 'none';
+  document.getElementById('viewTitle').innerHTML = '全局概览 <span class="week-tag">累计视图</span>';
+  renderGlobal();
+  autoExportIfNeeded();
+  window.addEventListener('resize', ()=>{
+    Object.values(charts).forEach(c=>c&&c.resize());
+  });
+}
+boot();
+</script>
+</body>
+</html>
